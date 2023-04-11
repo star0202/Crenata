@@ -2,11 +2,13 @@ from datetime import datetime
 from typing import Literal, Optional
 
 from crenata.discord import CrenataInteraction
+from crenata.discord.allergic import allergic_select_option
 from crenata.discord.commands.school import school
 from crenata.discord.embed import meal_page
 from crenata.discord.interaction import school_info
 from crenata.utils.discord import ToDatetime, dynamic_send
 from discord import app_commands
+from discord.ui import Select, View
 
 
 @school.command(name="급식", description="급식 식단표를 가져와요.")
@@ -23,10 +25,12 @@ async def meal(
 
     _, edu_office_code, standard_school_code, preferences = info
 
+    data = await interaction.client.ctx.neispy.get_meal(
+        edu_office_code, standard_school_code, meal_time, date=date
+    )
+
     meal_info = meal_page(
-        await interaction.client.ctx.neispy.get_meal(
-            edu_office_code, standard_school_code, meal_time, date=date
-        ),
+        data,
         private=preferences.private,
     )
 
@@ -41,4 +45,11 @@ async def meal(
         )
         return
 
-    await dyn(embed=meal_info, ephemeral=preferences.ephemeral, view=None, content=None)
+    allergic = View()
+    allergic.add_item(
+        Select(placeholder="알러지 정보", options=allergic_select_option(data))
+    )
+
+    await dyn(
+        embed=meal_info, ephemeral=preferences.ephemeral, view=allergic, content=None
+    )

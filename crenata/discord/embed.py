@@ -27,7 +27,14 @@ def parse_br_tag(string: str) -> str:
     """
     <br/> 태그를 개행문자로 바꿔주는 함수입니다.
     """
-    return "\n".join([f"> {word}" for word in string.split("<br/>")])
+    return "\n".join([word for word in string.split("<br/>")])
+
+
+def insert_quote(string: str) -> str:
+    """
+    개행문자로 구분된 문자열 앞에 >를 추가해주는 함수입니다.
+    """
+    return "\n".join([f"> {word}" for word in string.splitlines()])
 
 
 def school_result_embed_maker(
@@ -65,17 +72,17 @@ def detailed_school_result_embed_maker(result: Any) -> Embed:
 
     embed.set_author(name="🔍 학교 상세 정보")
 
-    kind = f"> {result.SCHUL_KND_SC_NM}"
+    kind = result.SCHUL_KND_SC_NM
     if result.SCHUL_KND_SC_NM == "고등학교":
-        kind += f"\n> {result.HS_GNRL_BUSNS_SC_NM} {result.HS_SC_NM}"
+        kind += f"\n{result.HS_GNRL_BUSNS_SC_NM} {result.HS_SC_NM}"
 
     if (coedu := result.COEDU_SC_NM) == "남" or coedu == "여":
         coedu += "학교"
     else:
         coedu = "남녀공학"
-    kind += f"\n> {coedu}"
+    kind += f"\n{coedu}"
 
-    embed.add_field(name="❓ 학교 분류", value=add_paragraph(kind))
+    embed.add_field(name="❓ 학교 분류", value=add_paragraph(insert_quote(kind)))
     embed.add_field(
         name="⚒️ 설립일", value=datetime_to_readable(to_datetime(result.FOND_YMD))
     )
@@ -120,7 +127,7 @@ def meal_page(results: Optional[list[Any]], private: bool) -> Optional[Embed]:
     for result in results:
         embed.add_field(
             name=f"{add_emoji(result.MMEAL_SC_NM)}",
-            value=f"{parse_br_tag(result.DDISH_NM)}",
+            value=f"{insert_quote(parse_br_tag(result.DDISH_NM))}",
             inline=True,
         )
 
